@@ -130,7 +130,6 @@ void TrackAnalyzer::initHistos()
   DistanceOfClosestApproachErrorVsPhi = nullptr;
   DistanceOfClosestApproachErrorVsDxy = nullptr;
   DistanceOfClosestApproachToBS = nullptr;
-  DistanceOfClosestApproachToBSdz = nullptr;	
   AbsDistanceOfClosestApproachToBS = nullptr;
   DistanceOfClosestApproachToPV = nullptr;
   DistanceOfClosestApproachToPVZoom = nullptr;
@@ -139,7 +138,6 @@ void TrackAnalyzer::initHistos()
   DistanceOfClosestApproachVsTheta = nullptr;
   DistanceOfClosestApproachVsPhi = nullptr;  
   DistanceOfClosestApproachToBSVsPhi = nullptr;
-  DistanceOfClosestApproachToBSVsEta = nullptr;
   DistanceOfClosestApproachToPVVsPhi = nullptr;
   DistanceOfClosestApproachVsEta = nullptr;
   xPointOfClosestApproach = nullptr;
@@ -151,7 +149,6 @@ void TrackAnalyzer::initHistos()
   zPointOfClosestApproach = nullptr;
   zPointOfClosestApproachVsPhi = nullptr;
   algorithm = nullptr;
-  Quality = nullptr;
   oriAlgo = nullptr;
   stoppingSource = nullptr;
   stoppingSourceVSeta = nullptr;
@@ -646,11 +643,6 @@ void TrackAnalyzer::bookHistosForHitProperties(DQMStore::IBooker & ibooker) {
       algorithm->setAxisTitle("Tracking algorithm",1);
       algorithm->setAxisTitle("Number of Tracks",2);
 
-      histname = "Quality_";
-      Quality = ibooker.book1D(histname+CategoryName, histname+CategoryName, 3, 0., 3.);
-      Quality->setAxisTitle("Tracking Quality",1);
-      Quality->setAxisTitle("Number of Tracks",2);
-
       histname = "originalAlgorithm_";
       oriAlgo = ibooker.book1D(histname+CategoryName, histname+CategoryName, reco::TrackBase::algoSize, 0., double(reco::TrackBase::algoSize));
       oriAlgo->setAxisTitle("Tracking algorithm",1);
@@ -659,10 +651,6 @@ void TrackAnalyzer::bookHistosForHitProperties(DQMStore::IBooker & ibooker) {
       for (size_t ibin=0; ibin<reco::TrackBase::algoSize-1; ibin++) {
 	algorithm->setBinLabel(ibin+1,reco::TrackBase::algoNames[ibin]);
         oriAlgo->setBinLabel(ibin+1,reco::TrackBase::algoNames[ibin]);
-      }
-
-      for (size_t ibino=0; ibino<reco::TrackBase::qualitySize-5; ibino++) {
-	Quality->setBinLabel(ibino+1,reco::TrackBase::qualityNames[ibino]);
       }
 
       size_t StopReasonNameSize = sizeof(StopReasonName::StopReasonName)/sizeof(std::string);
@@ -815,11 +803,6 @@ void TrackAnalyzer::bookHistosForBeamSpot(DQMStore::IBooker & ibooker) {
       DistanceOfClosestApproachToBS = ibooker.book1D(histname+CategoryName,histname+CategoryName,DxyBin,DxyMin,DxyMax);
       DistanceOfClosestApproachToBS->setAxisTitle("Track d_{xy} wrt beam spot (cm)",1);
       DistanceOfClosestApproachToBS->setAxisTitle("Number of Tracks",2);
-
-      histname = "DistanceOfClosestApproachToBSdz_";
-      DistanceOfClosestApproachToBSdz = ibooker.book1D(histname+CategoryName,histname+CategoryName,DxyBin,-1.0,1.0);
-      DistanceOfClosestApproachToBSdz->setAxisTitle("Track d_{z} wrt beam spot (cm)",1);
-      DistanceOfClosestApproachToBSdz->setAxisTitle("Number of Tracks",2);
       
       histname = "AbsDistanceOfClosestApproachToBS_";
       AbsDistanceOfClosestApproachToBS = ibooker.book1D(histname+CategoryName,histname+CategoryName,AbsDxyBin,AbsDxyMin,AbsDxyMax);
@@ -831,13 +814,6 @@ void TrackAnalyzer::bookHistosForBeamSpot(DQMStore::IBooker & ibooker) {
       DistanceOfClosestApproachToBSVsPhi->getTH1()->SetCanExtend(TH1::kAllAxes);
       DistanceOfClosestApproachToBSVsPhi->setAxisTitle("Track #phi",1);
       DistanceOfClosestApproachToBSVsPhi->setAxisTitle("Track d_{xy} wrt beam spot (cm)",2);
-
-      histname = "DistanceOfClosestApproachToBSVsEta_";
-      DistanceOfClosestApproachToBSVsEta = ibooker.bookProfile(histname+CategoryName,histname+CategoryName, EtaBin, EtaMin, EtaMax, DxyBin, DxyMin, DxyMax,"");
-      DistanceOfClosestApproachToBSVsEta->getTH1()->SetCanExtend(TH1::kAllAxes);
-      DistanceOfClosestApproachToBSVsEta->setAxisTitle("Track #eta",1);
-      DistanceOfClosestApproachToBSVsEta->setAxisTitle("Track d_{xy} wrt beam spot (cm)",2);
-
       
       histname = "xPointOfClosestApproachVsZ0wrt000_";
       xPointOfClosestApproachVsZ0wrt000 = ibooker.bookProfile(histname+CategoryName, histname+CategoryName, Z0Bin, Z0Min, Z0Max, X0Bin, X0Min, X0Max,"");
@@ -1119,7 +1095,7 @@ void TrackAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 {
   auto pt    = track.pt();
   auto phi   = track.phi();
-  auto eta   = track.eta();
+  // double eta   = track.eta();
   auto phiIn =  track.innerPosition().phi();
   auto etaIn =  track.innerPosition().eta();
   auto phiOut =  track.outerPosition().phi();
@@ -1209,17 +1185,6 @@ void TrackAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     }
 
     // algorithm
-    
-    if (track.quality(reco::TrackBase::loose)) {
-    Quality->Fill(reco::TrackBase::loose);
-    }
-    if (track.quality(reco::TrackBase::tight)) {
-    Quality->Fill(reco::TrackBase::tight);
-    }
-    if (track.quality(reco::TrackBase::highPurity)) {
-    Quality->Fill(reco::TrackBase::highPurity);
-    }
-
     algorithm->Fill(static_cast<double>(track.algo()));
     oriAlgo->Fill(static_cast<double>(track.originalAlgo()));
 
@@ -1250,10 +1215,8 @@ void TrackAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     DistanceOfClosestApproachErrorVsDxy -> Fill(track.dxy(bs.position()),track.dxyError());
 
     DistanceOfClosestApproachToBS      -> Fill(track.dxy(bs.position()));
-    DistanceOfClosestApproachToBSdz      -> Fill(track.dz(bs.position()));		
     AbsDistanceOfClosestApproachToBS   -> Fill(std::abs(track.dxy(bs.position())));
     DistanceOfClosestApproachToBSVsPhi -> Fill(track.phi(), track.dxy(bs.position()));
-    DistanceOfClosestApproachToBSVsEta -> Fill(track.eta(), track.dxy(bs.position()));
     zPointOfClosestApproachVsPhi       -> Fill(track.phi(), track.vz());
     xPointOfClosestApproachVsZ0wrt000  -> Fill(track.dz(),  track.vx());
     yPointOfClosestApproachVsZ0wrt000  -> Fill(track.dz(),  track.vy());
@@ -1584,24 +1547,6 @@ void TrackAnalyzer::bookHistosForState(std::string sname, DQMStore::IBooker & ib
     tkmes.TrackPt->setAxisTitle("Track p_{T} (GeV/c)", 1);
     tkmes.TrackPt->setAxisTitle("Number of Tracks",2);
 
-   histname = "TrackPtLoose_" + histTag;
-    tkmes.TrackPtLoose = ibooker.book1D(histname, histname, TrackPtBin, TrackPtMin, TrackPtMax);
-    tkmes.TrackPtLoose->setAxisTitle("Track p_{T} (GeV/c)", 1);
-    tkmes.TrackPtLoose->setAxisTitle("Number of Tracks",2);
-
-   histname = "TrackPtTight_" + histTag;
-    tkmes.TrackPtTight = ibooker.book1D(histname, histname, TrackPtBin, TrackPtMin, TrackPtMax);
-    tkmes.TrackPtTight->setAxisTitle("Track p_{T} (GeV/c)", 1);
-    tkmes.TrackPtTight->setAxisTitle("Number of Tracks",2);
-
-   histname = "TrackPtHighPurity_" + histTag;
-    tkmes.TrackPtHighPurity = ibooker.book1D(histname, histname, TrackPtBin, TrackPtMin, TrackPtMax);
-    tkmes.TrackPtHighPurity->setAxisTitle("Track p_{T} (GeV/c)", 1);
-    tkmes.TrackPtHighPurity->setAxisTitle("Number of Tracks",2);
-
-
-
-
     if (doTrackPxPyPlots_) {
       histname = "TrackPx_" + histTag;
       tkmes.TrackPx = ibooker.book1D(histname, histname, TrackPxBin, TrackPxMin, TrackPxMax);
@@ -1628,25 +1573,50 @@ void TrackAnalyzer::bookHistosForState(std::string sname, DQMStore::IBooker & ib
     tkmes.TrackEta->setAxisTitle("Track #eta", 1);
     tkmes.TrackEta->setAxisTitle("Number of Tracks",2);
 
-    histname = "TrackEtaLoose_" + histTag;
-    tkmes.TrackEtaLoose = ibooker.book1D(histname, histname, EtaBin, EtaMin, EtaMax);
-    tkmes.TrackEtaLoose->setAxisTitle("Track #eta", 1);
-    tkmes.TrackEtaLoose->setAxisTitle("Number of Loose Tracks",2);
-
-    histname = "TrackEtaTight_" + histTag;
-    tkmes.TrackEtaTight = ibooker.book1D(histname, histname, EtaBin, EtaMin, EtaMax);
-    tkmes.TrackEtaTight->setAxisTitle("Track #eta", 1);
-    tkmes.TrackEtaTight->setAxisTitle("Number of Tight Tracks",2);
-
-    histname = "TrackEtaHigh_" + histTag;
-    tkmes.TrackEtaHigh = ibooker.book1D(histname, histname, EtaBin, EtaMin, EtaMax);
-    tkmes.TrackEtaHigh->setAxisTitle("Track #eta", 1);
-    tkmes.TrackEtaHigh->setAxisTitle("Number of highPurity Tracks",2);
-
     histname = "TrackEtaPhi_" + histTag;
     tkmes.TrackEtaPhi = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
     tkmes.TrackEtaPhi->setAxisTitle("Track #eta", 1);
     tkmes.TrackEtaPhi->setAxisTitle("Track #phi", 2);
+
+    histname = "TrackEfficiency1_" + histTag;
+    tkmes.TrackEfficiency1 = ibooker.bookProfile(histname, histname, 40, 0., 40., 40, 0., 10.);
+    tkmes.TrackEfficiency1->setAxisTitle("Track #eta", 1);
+    tkmes.TrackEfficiency1->setAxisTitle("Track #phi", 2);
+
+    histname = "TrackEfficiency2_" + histTag;
+    tkmes.TrackEfficiency2 = ibooker.bookProfile(histname, histname, 40, 0., 40., 40, 0., 10.);
+    tkmes.TrackEfficiency2->setAxisTitle("Track #eta", 1);
+    tkmes.TrackEfficiency2->setAxisTitle("Track #phi", 2);
+
+    histname = "TrackEtaPhiInverted_" + histTag;
+    tkmes.TrackEtaPhiInverted = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
+    tkmes.TrackEtaPhiInverted->setAxisTitle("Track #eta", 1);
+    tkmes.TrackEtaPhiInverted->setAxisTitle("Track #phi", 2);
+
+    histname = "TrackEtaPhiInverted2_" + histTag;
+    tkmes.TrackEtaPhiInverted2 = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
+    tkmes.TrackEtaPhiInverted2->setAxisTitle("Track #eta", 1);
+    tkmes.TrackEtaPhiInverted2->setAxisTitle("Track #phi", 2);
+
+    histname = "EtaPhiRelativeDiffEff1_" + histTag;
+    tkmes.EtaPhiRelativeDiffEff1 = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
+    tkmes.EtaPhiRelativeDiffEff1->setAxisTitle("Track #eta", 1);
+    tkmes.EtaPhiRelativeDiffEff1->setAxisTitle("Track #phi", 2);
+
+    histname = "EtaPhiRatioEff1_" + histTag;
+    tkmes.EtaPhiRatioEff1 = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
+    tkmes.EtaPhiRatioEff1->setAxisTitle("Track #eta", 1);
+    tkmes.EtaPhiRatioEff1->setAxisTitle("Track #phi", 2);
+
+    histname = "EtaPhiRelativeDiffEff2_" + histTag;
+    tkmes.EtaPhiRelativeDiffEff2 = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
+    tkmes.EtaPhiRelativeDiffEff2->setAxisTitle("Track #eta", 1);
+    tkmes.EtaPhiRelativeDiffEff2->setAxisTitle("Track #phi", 2);
+
+    histname = "EtaPhiRatioEff2_" + histTag;
+    tkmes.EtaPhiRatioEff2 = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
+    tkmes.EtaPhiRatioEff2->setAxisTitle("Track #eta", 1);
+    tkmes.EtaPhiRatioEff2->setAxisTitle("Track #phi", 2);
 
     histname = "TrackEtaPhiInner_" + histTag;
     tkmes.TrackEtaPhiInner = ibooker.book2D(histname, histname, Eta2DBin, EtaMin, EtaMax, Phi2DBin, PhiMin, PhiMax);
@@ -1668,14 +1638,8 @@ void TrackAnalyzer::bookHistosForState(std::string sname, DQMStore::IBooker & ib
     }
     histname = "TrackQ_" + histTag;
     tkmes.TrackQ = ibooker.book1D(histname, histname, TrackQBin, TrackQMin, TrackQMax);
-    tkmes.TrackQ->setAxisTitle("Track Charge", 1);
+    tkmes.TrackQ->setAxisTitle("Track ChargeHugo", 1);
     tkmes.TrackQ->setAxisTitle("Number of Tracks",2);
-
-
-    histname = "TrackQoverP_" + histTag;
-    tkmes.TrackQoverP = ibooker.book1D(histname, histname, TrackQBin, TrackQMin, TrackQMax);
-    tkmes.TrackQoverP->setAxisTitle("Track Charge over P", 1);
-    tkmes.TrackQoverP->setAxisTitle("Number of Tracks",2);
 
     histname = "TrackPErrOverP_" + histTag;
     tkmes.TrackPErr = ibooker.book1D(histname, histname, pErrBin, pErrMin, pErrMax);
@@ -1810,7 +1774,6 @@ void TrackAnalyzer::fillHistosForState(const edm::EventSetup& iSetup, const reco
     double p, px, py, pz, pt, theta, phi, eta, q;
     double pxerror, pyerror, pzerror, pterror, perror, phierror, etaerror;
 
-
     auto phiIn =  track.innerPosition().phi();
     auto etaIn =  track.innerPosition().eta();
     auto phiOut =  track.outerPosition().phi();
@@ -1818,8 +1781,6 @@ void TrackAnalyzer::fillHistosForState(const edm::EventSetup& iSetup, const reco
 
 
     if (sname == "default") {
-  
-//      quality = track.quality(reco::TrackBase::qualityByName(qualityString_)) ==1
 
       p     = track.p();
       px    = track.px();
@@ -1885,35 +1846,106 @@ void TrackAnalyzer::fillHistosForState(const edm::EventSetup& iSetup, const reco
 	tkmes.TrackPx->Fill(px);
 	tkmes.TrackPy->Fill(py);
       }
-
       tkmes.TrackPz->Fill(pz);
       tkmes.TrackPt->Fill(pt);
-
-      if (track.quality(reco::TrackBase::loose)) {
-      tkmes.TrackPtLoose->Fill(pt);
-      } 
-      if (track.quality(reco::TrackBase::tight)) {
-      tkmes.TrackPtTight->Fill(pt);
-      } 
-      if (track.quality(reco::TrackBase::highPurity)) {
-      tkmes.TrackPtHighPurity->Fill(pt);
-      } 
       
       // angles
       tkmes.TrackPhi->Fill(phi);
       tkmes.TrackEta->Fill(eta);
 
-      if (track.quality(reco::TrackBase::loose)) {
-      tkmes.TrackEtaLoose->Fill(eta);
-      } 
-      if (track.quality(reco::TrackBase::tight)) {
-      tkmes.TrackEtaTight->Fill(eta);
-      } 
-      if (track.quality(reco::TrackBase::highPurity)) {
-      tkmes.TrackEtaHigh->Fill(eta);
-      } 
-
       tkmes.TrackEtaPhi->Fill(eta,phi);
+      tkmes.TrackEtaPhiInverted->Fill(eta,-1.0*phi);
+      //Filling inverted eta-phi maps for efficiency study 
+      tkmes.TrackEtaPhiInverted2->Fill(eta,-1.0*phi+3.14159);
+      tkmes.TrackEtaPhiInverted2->Fill(eta,-1.0*phi-3.14159);
+      // 
+      double limitdown = 1.; 
+      int binx = 0;
+      int biny = 0;
+      int nx = tkmes.TrackEtaPhi->getTH2F()->GetXaxis()->GetNbins();
+      int ny = tkmes.TrackEtaPhi->getTH2F()->GetYaxis()->GetNbins();
+
+      for (int i=1;i<=nx;i++) {
+      for (int j=1;j<=ny;j++) {
+      
+      double P =  tkmes.TrackEtaPhi->getTH2F()->GetBinContent(i,j);
+      double N =  tkmes.TrackEtaPhiInverted->getTH2F()->GetBinContent(i,j);
+      double N2 =  tkmes.TrackEtaPhiInverted2->getTH2F()->GetBinContent(i,j);
+      double Suma1 = P + N;
+      double Resta1 = N - P;
+      double Suma2 = P + N2;
+      double Resta2 = P - N2;
+      
+      if (Suma1 == 0 || Suma2 == 0) {
+      tkmes.EtaPhiRelativeDiffEff1->getTH2F()->SetBinContent(i,j,1.);
+      tkmes.EtaPhiRelativeDiffEff2->getTH2F()->SetBinContent(i,j,1.);
+      
+      }
+      else {  
+      double Division1 = Resta1/Suma1; 
+      tkmes.EtaPhiRelativeDiffEff1->getTH2F()->SetBinContent(i,j,Division1);
+      double Division2 = Resta2/Suma2; 
+      tkmes.EtaPhiRelativeDiffEff2->getTH2F()->SetBinContent(i,j,Division2);
+      }
+      if (N == 0 || N2 == 0) {
+      tkmes.EtaPhiRatioEff1->getTH2F()->SetBinContent(i,j,0.);
+      tkmes.EtaPhiRatioEff2->getTH2F()->SetBinContent(i,j,0.);
+      }
+      else {  
+      	double Division0 = P/N; 
+      	double Division02 = P/N2;
+      	if (Division0 < limitdown && Division0 > 0.3) {
+      		if (Division0 < 1.) {
+      			limitdown = Division0;
+     		}
+      		else {
+      			limitdown = 1/Division0;
+      		}
+      		binx = i;
+      		biny = j;
+      	}
+      tkmes.EtaPhiRatioEff1->getTH2F()->SetBinContent(i,j,Division0);
+      tkmes.EtaPhiRatioEff2->getTH2F()->SetBinContent(i,j,Division02);
+      }
+      tkmes.EtaPhiRatioEff1->getTH2F()->Draw("colz");
+      tkmes.EtaPhiRatioEff2->getTH2F()->Draw("colz");   
+      tkmes.EtaPhiRelativeDiffEff1->getTH2F()->Draw("colz");
+      tkmes.EtaPhiRelativeDiffEff2->getTH2F()->Draw("colz");  
+      }
+      }
+    
+      double ptcut = 0.;
+
+      for (int k=1;k<=40;k++){
+
+	TH2F*  EtaPhi = new TH2F(*tkmes.TrackEtaPhi->getTH2F());
+     	TH2F*  EtaPhiInverted = new TH2F(*tkmes.TrackEtaPhiInverted->getTH2F());
+      	TH2F*  EtaPhiInverted2 = new TH2F(*tkmes.TrackEtaPhiInverted2->getTH2F()); 
+            
+      	if (track.pt() > ptcut){
+      		
+		double P1 = EtaPhi->GetBinContent(binx,biny);
+      		double N1 = EtaPhiInverted->GetBinContent(binx,biny);
+      		double N2 = EtaPhiInverted2->GetBinContent(binx,biny);
+      
+		if (N1 == 0. || N2 == 0.) {
+      			tkmes.TrackEfficiency1->Fill(ptcut,0.01);
+     			tkmes.TrackEfficiency2->Fill(ptcut,0.01);
+      
+      		} else {  
+      			double D1 = P1/N1; 
+      			double D2 = P1/N2; 
+      			tkmes.TrackEfficiency1->Fill(ptcut,D1);
+      			tkmes.TrackEfficiency2->Fill(ptcut,D2);
+      		}
+        delete EtaPhi;
+	delete EtaPhiInverted;
+	delete EtaPhiInverted2;
+      	}
+
+      	ptcut = ptcut + 1.;
+      }
+
       tkmes.TrackEtaPhiInner->Fill(etaIn,phiIn);
       tkmes.TrackEtaPhiOuter->Fill(etaOut,phiOut);
 
@@ -1921,8 +1953,6 @@ void TrackAnalyzer::fillHistosForState(const edm::EventSetup& iSetup, const reco
 	tkmes.TrackTheta->Fill(theta);
       }
       tkmes.TrackQ->Fill(q);
-      tkmes.TrackQoverP->Fill(q/p);
-
       
       // errors
       tkmes.TrackPtErr->Fill(pterror);
